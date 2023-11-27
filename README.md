@@ -1,0 +1,9 @@
+# steambulkvalidate
+this project developed for mass steam games datafile verify 
+
+# python requirements
+pip install vdf<br>
+pip install pywin32
+
+# usage
+execute `python.exe steamValidate.py` in console with administrator priveleges
