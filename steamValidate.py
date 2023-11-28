@@ -57,6 +57,8 @@ def waitForLogFile(appID, filePosition):
                         return result
                 currentLogSize = os.path.getsize(logFilename)
                 filePosition = currentLogSize
+        elif os.path.getsize(logFilename) < currentLogSize:
+            currentLogSize=0
         time.sleep(0.5)
 
 def ProcessSteamFolder(directory):
