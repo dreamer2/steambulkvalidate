@@ -13,14 +13,16 @@ from datetime import datetime as dt
 ruLocale={"steamError":"Ошибка поиска Steam",
           "finished1":'Работа завершена: время {time}, всего игр {total}, пропущено {alreadyProcessed}, ошибок пути {folderErrors}.',
           "finished2":"проверка завершена",
-          "skip":"Пропуск {name} : {app_id} : {installdir}, уже в списке завершенного.",
-          "start":"Запуск проверки {name} : {app_id} : {installdir}, ожидаю завершения.",
+          "finishedErr":"ошибка проверки",
+          "skip":"Пропуск {name} : {size} Гб : {app_id} : {installdir}, уже в списке завершенного.",
+          "start":"Запуск проверки {name} : {size} Гб : {app_id} : {installdir}, ожидаю завершения.",
         }
 enLocale={"steamError":"Steam detect error",
           "finished1":'Work done: time {time}, total games {total}, skipped {alreadyProcessed}, path errors {folderErrors}.',
           "finished2":"check done",
-          "skip":"skip {name} : {app_id} : {installdir}, marked already checked today.",
-          "start":"start check {name} : {app_id} : {installdir}, waiting.",
+          "finishedErr":"check error",
+          "skip":"skip {name} : {size} Gb : {app_id} : {installdir}, marked already checked today.",
+          "start":"start check {name} : {size} Gb : {app_id} : {installdir}, waiting.",
           }
 
 def formatTime(elapsed_time):
@@ -75,6 +77,7 @@ def ProcessSteamFolder(directory):
 
                 app_id = acf_data['AppState']['appid']
                 name = acf_data['AppState']['name']
+                size=round(float(acf_data["AppState"]['SizeOnDisk'])/pow(2,30),2)
                 installdir = '"' + \
                     os.path.join(directory, 'common',
                                  acf_data['AppState']['installdir'])+'"'
@@ -84,10 +87,10 @@ def ProcessSteamFolder(directory):
 
                 if app_id in finishedData:
                     print(
-                        f'{current:02}/{total:02} {ftime} '+currentLocale['skip'].format(name=name,app_id=app_id,installdir=installdir))
+                        f'{current:02}/{total:02} {ftime} '+currentLocale['skip'].format(name=name,app_id=app_id,installdir=installdir,size=size))
                 else:
                     print(
-                        f'{current:02}/{total:02} {ftime} '+ currentLocale['start'].format(name=name,app_id=app_id,installdir=installdir))    
+                        f'{current:02}/{total:02} {ftime} '+ currentLocale['start'].format(name=name,app_id=app_id,installdir=installdir,size=size))    
 
                     cmd = f'/c start steam://validate/{app_id}'
 
@@ -96,21 +99,24 @@ def ProcessSteamFolder(directory):
                     win32api.ShellExecute(0, "open", 'cmd.exe', cmd, "", 1)
 
                     result = waitForLogFile(app_id, filePosition)
+                    if result=="No Error":
+                        ctime = dt.now()
+                        ftime= f'{ctime.hour:02}:{ctime.minute:02}'
 
-                    ctime = dt.now()
-                    ftime= f'{ctime.hour:02}:{ctime.minute:02}'
+                        print(
+                            f"{current:02}/{total:02} {ftime} {currentLocale['finished2']} {name} : {app_id} : {installdir}, {result}.")
 
-                    print(
-                        f"{current:02}/{total:02} {ftime} {currentLocale['finished2']} {name} : {app_id} : {installdir}, {result}.")
+                        finishedData[app_id] = name
 
-                    finishedData[app_id] = name
-
-                    if storeFinished:
-                        try:
-                            with open(finishedPath, 'w') as f:
-                                json.dump(finishedData, f, indent=4)
-                        except:
-                            pass
+                        if storeFinished:
+                            try:
+                                with open(finishedPath, 'w') as f:
+                                    json.dump(finishedData, f, indent=4)
+                            except:
+                                pass
+                    else:
+                        print(
+                            f"{current:02}/{total:02} {ftime} {currentLocale['finishedErr']} {name} : {app_id} : {installdir}, {result}.")
 
                     time.sleep(20)
 
