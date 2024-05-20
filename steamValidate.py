@@ -48,9 +48,9 @@ def waitForLogFile(appID, filePosition):
                 log_file.seek(filePosition)
                 for line in log_file:
                     logMatch = re.search(
-                        r'.+AppID '+str(appID)+' scheduler finished : removed from schedule \(result (.+),.+\)', line,re.IGNORECASE)
+                        r'.+AppID '+str(appID)+r' scheduler finished : removed from schedule \(result (.+),.+\)', line,re.IGNORECASE)
                     logMatch2 = re.search(
-                        r'.+AppID '+str(appID)+' is marked "NoUpdatesAfterInstall" - (skipping validation)', line,re.IGNORECASE)
+                        r'.+AppID '+str(appID)+r' is marked "NoUpdatesAfterInstall" - (skipping validation)', line,re.IGNORECASE)
                     if logMatch:
                         result = logMatch.group(1)
                         return result
