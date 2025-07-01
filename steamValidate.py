@@ -11,14 +11,14 @@ from datetime import datetime as dt
 
 
 ruLocale={"steamError":"Ошибка поиска Steam",
-          "finished1":'Работа завершена: время {time}, всего игр {total}, пропущено {alreadyProcessed}, ошибок пути {folderErrors}.',
+          "finished1":'Работа завершена: время {time}, всего игр {total}, пропущено {alreadyProcessed}, ошибок пути {folderErrors}, ошибок проверки {errorsInCheck}.',
           "finished2":"проверка завершена",
           "finishedErr":"ошибка проверки",
           "skip":"Пропуск {name} : {size} Гб : {app_id} : {installdir}, уже в списке завершенного.",
           "start":"Запуск проверки {name} : {size} Гб : {app_id} : {installdir}, ожидаю завершения.",
         }
 enLocale={"steamError":"Steam detect error",
-          "finished1":'Work done: time {time}, total games {total}, skipped {alreadyProcessed}, path errors {folderErrors}.',
+          "finished1":'Work done: time {time}, total games {total}, skipped {alreadyProcessed}, path errors {folderErrors}, check errors {errorsInCheck}.',
           "finished2":"check done",
           "finishedErr":"check error",
           "skip":"skip {name} : {size} Gb : {app_id} : {installdir}, marked already checked today.",
@@ -47,10 +47,9 @@ def waitForLogFile(appID, filePosition):
             with open(logFilename, 'r') as log_file:
                 log_file.seek(filePosition)
                 for line in log_file:
-                    logMatch = re.search(
-                        r'.+AppID '+str(appID)+r' scheduler finished : removed from schedule \(result (.+),.+\)', line,re.IGNORECASE)
-                    logMatch2 = re.search(
-                        r'.+AppID '+str(appID)+r' is marked "NoUpdatesAfterInstall" - (skipping validation)', line,re.IGNORECASE)
+                    #logMatch = re.search(r'.+AppID '+str(appID)+' scheduler finished : removed from schedule \(result (.+),.+\)', line,re.IGNORECASE)
+                    logMatch=re.search(fr'.+AppID {appID} scheduler finished : removed from schedule \(result (.+),.+\)',line,re.IGNORECASE)
+                    logMatch2 = re.search(r'.+AppID '+str(appID)+' is marked "NoUpdatesAfterInstall" - (skipping validation)', line,re.IGNORECASE)
                     if logMatch:
                         result = logMatch.group(1)
                         return result
@@ -65,7 +64,7 @@ def waitForLogFile(appID, filePosition):
 
 def ProcessSteamFolder(directory):
 
-    global current
+    global current,errorsInCheck,errorNames
 
     for filename in os.listdir(directory):
         if filename.endswith('.acf'):
@@ -115,8 +114,10 @@ def ProcessSteamFolder(directory):
                             except:
                                 pass
                     else:
-                        print(
-                            f"{current:02}/{total:02} {ftime} {currentLocale['finishedErr']} {name} : {app_id} : {installdir}, {result}.")
+                        errorsInCheck+=1
+                        if name not in errorNames:
+                            errorNames.append(name)
+                        print(f"{current:02}/{total:02} {ftime} \033[31m{currentLocale['finishedErr']}\033[0m {name} : {app_id} : {installdir}, {result}.")
 
                     time.sleep(20)
 
@@ -152,6 +153,8 @@ if steamFolder is not None and os.path.isdir(steamFolder):
     alreadyProcessed = len(finishedData)
 
     folderErrors = 0
+    errorsInCheck=0
+    errorNames=[]
     total = 0
     current = 1
     startTime = time.time()
@@ -176,6 +179,11 @@ if steamFolder is not None and os.path.isdir(steamFolder):
     endTime = time.time()
     elapsedTime = endTime - startTime
 
-    print(currentLocale['finished1'].format(time=formatTime(elapsedTime),total=len(finishedData),alreadyProcessed=alreadyProcessed,folderErrors=folderErrors))
+    if len(errorNames) > 0:
+        print("errors:")
+        for errorName in errorNames:
+            print(f"\terrorName")
+
+    print(currentLocale['finished1'].format(time=formatTime(elapsedTime),total=len(finishedData),alreadyProcessed=alreadyProcessed,folderErrors=folderErrors,errorsInCheck=errorsInCheck))
 else:
     print(currentLocale['steamError'])
