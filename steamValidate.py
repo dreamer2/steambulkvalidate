@@ -182,7 +182,7 @@ if steamFolder is not None and os.path.isdir(steamFolder):
     if len(errorNames) > 0:
         print("errors:")
         for errorName in errorNames:
-            print(f"\terrorName")
+            print(f"\t{errorName}")
 
     print(currentLocale['finished1'].format(time=formatTime(elapsedTime),total=len(finishedData),alreadyProcessed=alreadyProcessed,folderErrors=folderErrors,errorsInCheck=errorsInCheck))
 else:
