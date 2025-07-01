@@ -1,4 +1,4 @@
-# steambulkvalidate
+# steam bulk validate
 this project developed for mass steam games datafile verify 
 
 # python requirements
